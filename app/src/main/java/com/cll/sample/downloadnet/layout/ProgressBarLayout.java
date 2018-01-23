@@ -52,7 +52,6 @@ public class ProgressBarLayout extends ProgressBar {
 
     private String convert(String number){
         String a = new DecimalFormat("0.00").format((float)(Float.valueOf(number) * 1024));
-        Log.w("tag","test Poster qqqqqqqqq  a= "+a+"  Float.valueOf(number) = "+Float.valueOf(number));
         return a;
     }
 

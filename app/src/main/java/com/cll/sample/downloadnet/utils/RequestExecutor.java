@@ -1,5 +1,6 @@
 package com.cll.sample.downloadnet.utils;
 
+import com.cll.sample.downloadnet.DownloadBlockTask;
 import com.cll.sample.downloadnet.DownloadTask;
 
 import java.util.concurrent.ExecutorService;
@@ -20,5 +21,16 @@ public enum RequestExecutor {
 
     public void execute(Request request,ResultListenr mResultListenr){
         sExecutorService.execute(new DownloadTask(request,mResultListenr));
+
+    }
+
+    /**
+     *
+     * @param request
+     * @param threadCount  if threadCount > 5, threadCount = 5.
+     * @param mResultListenr
+     */
+    public void execute(Request request,int threadCount,ResultListenr mResultListenr){
+        sExecutorService.execute(new DownloadBlockTask(request,threadCount,mResultListenr));
     }
 }

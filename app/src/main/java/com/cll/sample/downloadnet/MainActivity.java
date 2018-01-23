@@ -1,7 +1,10 @@
 package com.cll.sample.downloadnet;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.media.MediaPlayer;
@@ -11,6 +14,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
@@ -20,6 +24,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.cll.sample.downloadnet.layout.ProgressBarLayout;
+import com.cll.sample.downloadnet.utils.DialogUtils;
+import com.cll.sample.downloadnet.utils.NetStatusUtils;
 import com.cll.sample.downloadnet.utils.Request;
 import com.cll.sample.downloadnet.utils.RequestExecutor;
 import com.cll.sample.downloadnet.utils.ResultListenr;
@@ -30,43 +36,84 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 
 public class MainActivity extends AppCompatActivity {
-    private Button button;
+
+
+    private static final String TAG = MainActivity.class.getSimpleName();
+    private Button singleButton;
+    private Button multButton;
     private ImageView imageView;
     private ProgressBarLayout progressBar;
-    public static String[]PERMISSIONS_STORAGE = {
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        singleButton = (Button) findViewById(R.id.sigle_button);
+        multButton = (Button) findViewById(R.id.mult_thread_button);
 
-//        int permission = ActivityCompat.checkSelfPermission(this,Manifest.permission.WRITE_EXTERNAL_STORAGE);
-//        if (permission != PackageManager.PERMISSION_GRANTED) {
-//            ActivityCompat.requestPermissions(this,PERMISSIONS_STORAGE,1);
-//        }
-        button = (Button) findViewById(R.id.button1);
-//        imageView = (ImageView) findViewById(R.id.imageView1);
-//        progressBar = (ProgressBar)findViewById(R.id.progressbar);
-//        progressBar.setProgress(0);
-        initListener();
-        String a = new DecimalFormat(".00").format(0.999999999999999999);
-        Log.w("tag","test setTest1 a = "+a);
 
         progressBar = (ProgressBarLayout)findViewById(R.id.progressbar);
         progressBar.setTest1("0","0");
-//        progressBar.setText
+
+        initListener();
     }
     private void initListener(){
-        button.setOnClickListener(new View.OnClickListener() {
+        singleButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (isDownloading){
                     return;
                 }
-                download();
+                if (NetStatusUtils.isWifiNet(MainActivity.this)){
+                    download();
+                }else{
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this)
+                            .setPositiveButton("开", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    Intent intent = new Intent();
+                                    intent.setAction("android.net.wifi.PICK_WIFI_NETWORK");
+                                    startActivity(intent);
+                                }
+                            });
+                    builder.setView(LayoutInflater.from(MainActivity.this).inflate(R.layout.dialog_net_status_hint,null));
+                    builder.show();
+                }
+
+            }
+        });
+
+        multButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                download2();
+            }
+        });
+    }
+
+    int a;
+    private void download2(){
+        isDownloading = true;
+        String path = dir +"阿里星球.apk";
+        boolean s = createFile(path);
+        Request request = new Request(downloadUrl,path,progressBar);
+        mProgress = 0;
+        RequestExecutor.SINGLE.execute(request, new ResultListenr() {
+            @Override
+            public void isSuccess() {
+                isDownloading = false;
+                Toast.makeText(MainActivity.this, "下载成功!  ", Toast.LENGTH_SHORT).show();
+            }
+            @Override
+            public void isFailed() {
+                isDownloading = false;
+                Toast.makeText(MainActivity.this, "下载失败!  ", Toast.LENGTH_SHORT).show();
+            }
+            @Override
+            public void setProgressBar(int progress, int max) {
+                mProgress = progress;
+                mMax = max;
+                progressBar.setProgress(mProgress);
+                progressBar.setTest1(convertFormat((float)progress / 1024),convertFormat((float)max / 1024));
             }
         });
     }
@@ -112,7 +159,6 @@ public class MainActivity extends AppCompatActivity {
 
     private String convertFormat(Float number){
         String str = new DecimalFormat("0.00").format((float)number / 1024 );
-//        Log.w("tag","test Poster str = "+str);
         return str;
     }
 

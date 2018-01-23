@@ -48,7 +48,6 @@ public class DownloadTask implements Runnable {
             connection = (HttpURLConnection)url.openConnection();
             fileLength = connection.getContentLength();
             if (fileLength > 0){
-                request.getProgressBar().setMax(fileLength);
                 File file = new File(request.getSavePath());
                 if (connection.getResponseCode() != HttpURLConnection.HTTP_OK){
                     message.setSuccess(MainMessages.IS_FAILED);
